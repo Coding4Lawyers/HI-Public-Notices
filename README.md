@@ -1,5 +1,5 @@
 # HI-Public-Notices
- Scrapes and adds notices to a sql database
+ Scrapes the https://statelegals.staradvertiser.com/category/public-notices/ website and adds notices to a sql database
 
 ## TODO
 Better date range options
@@ -15,7 +15,17 @@ source venv/bin/activate
 pip install -r requirements.txt
 python main.py
 ```
-Cronjob
+## Use
+```
+python main.py
+```
+If the first argument is "All" it will scrape all the notices. This is useful for starting off.
+```
+python main.py All 
+```
+
+## Cronjob
 ```
 0 12 * * * /home/ubuntu/HI-Poublic_Notices/venv/bin/python /home/ubuntu/HI-Poublic_Notices/main.py >> /home/ubuntu/HI-Poublic_Notices/cronlog.log 2>&1
 ```
+
