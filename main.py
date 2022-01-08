@@ -9,7 +9,7 @@ import passwords
 import sys
 
 #I had to run "ALTER TABLE HIProjects.public_notices CONVERT TO CHARACTER SET utf8" on the sql table to get it to encode right.
-#0 6 * * * $(which python3) /home/ubuntu/publicnotices.py >> ~/cron.log 2>&1
+
 
 #TODO: Better date range options
 #TODO: Don't allow duplicates in the database.
@@ -119,7 +119,8 @@ if __name__ == "__main__":
     print("Starting Scrape",datetime.now(pytz.timezone('Pacific/Honolulu')))
     #This is a an argument that allows the program to capture all the eventsd. This is good for starting over and populating a full db/csv
     #The default is collecting just today.
-    if(len(sys.argv) > 0 and sys.argv[1] == "All"):
+    #First argument is always the name of the file.
+    if(len(sys.argv) > 1 and sys.argv[1] == "All"):
         collectall = True
     else:
         collectall = False

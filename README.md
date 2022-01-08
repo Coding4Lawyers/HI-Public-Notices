@@ -26,6 +26,6 @@ python main.py All
 
 ## Cronjob
 ```
-0 12 * * * /home/ubuntu/HI-Poublic_Notices/venv/bin/python /home/ubuntu/HI-Poublic_Notices/main.py >> /home/ubuntu/HI-Poublic_Notices/cronlog.log 2>&1
+0 12 * * * /home/ubuntu/HI-Public-Notices/venv/bin/python /home/ubuntu/HI-Public-Notices/main.py >> /home/ubuntu/HI-Public-Notices/cronlog.log 2>&1
 ```
 
