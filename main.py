@@ -6,19 +6,32 @@ import mysql.connector
 from datetime import datetime
 import pytz
 import passwords
-import sys
 
 #I had to run "ALTER TABLE HIProjects.public_notices CONVERT TO CHARACTER SET utf8" on the sql table to get it to encode right.
 
 
-#TODO: Better date range options
-#TODO: Don't allow duplicates in the database.
-#TODO: Error catching on insert into sql if failed. This is needed because it's on a relatively small sql db.
+def checkIfAlreadyExistsInDB(notice):
+    mydb = mysql.connector.connect(
+        host=passwords.host,
+        user=passwords.user,
+        password=passwords.password,
+        database=passwords.database
+    )
+    mycursor = mydb.cursor()
+    sql = "SELECT * FROM public_notices WHERE Notice_Type = %s and Publication_Date = %s and Full_Description_Link = %s and Newspaper = %s and Full_Description = %s"
+    val = (notice['Notice Type'],notice['Publication Date'],notice['Link'],notice['Newspaper'],notice['Full Description'],)
 
-
+    mycursor.execute(sql, val)
+    records = mycursor.fetchall()
+    return len(records)
 def insertSQL(notice):
     #Insert the new record into the sql table.
     #This function only inserts one at a time.
+
+    if(checkIfAlreadyExistsInDB(notice) > 0):
+        #print(notice['Link'],"is already in the db")
+        return False
+
     mydb = mysql.connector.connect(
         host=passwords.host,
         user=passwords.user,
@@ -35,7 +48,8 @@ def insertSQL(notice):
 
     mydb.commit()
 
-    print(mycursor.rowcount, "record inserted.")
+    print(notice['Publication Date'], notice['Link'], "record inserted.")
+    return True
 
 def scrapeFullDescription(url):
     #Go do the full description page and grab that.
@@ -46,7 +60,7 @@ def scrapeFullDescription(url):
     soup = BeautifulSoup(html,'lxml')
     description = soup.find('div',attrs={'class':'entry-content'}).text.strip()
     return description
-def scrapeNoticesFromPage(url,collectall):
+def scrapeNoticesFromPage(url):
     #Go to the summary page and cycle through and get all the urls.
     #This should be called once for each possible page
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'}
@@ -71,11 +85,6 @@ def scrapeNoticesFromPage(url,collectall):
                 #This means this is actually from the last year.
                 #Delete one from the year so we put it in the right year
                 correcteddate = datetime.strptime(date + " " + str(year-1), '%b %d %Y')
-            if(collectall == False and correcteddate.date() != datetime.now(pytz.timezone('Pacific/Honolulu')).date()):
-                #Means this is not an anouncement from today
-                #This could be a problem if they post notices and back date them.
-                #The collectall variable is set by the user
-                continue
 
             notice['Publication Date'] = correcteddate
             contentrow = row.find('td',attrs={'class':'tdlisting'})
@@ -95,7 +104,7 @@ def scrapeNoticesFromPage(url,collectall):
             #Call the scrape full description function using the new link
             full_description = scrapeFullDescription(full_description_link)
             notice['Full Description'] = full_description.encode('utf-8')
-            print("Found new public notice",notice['Notice Type'],date,notice['Link'])
+            #print("Found notice",notice['Notice Type'],date,notice['Link'])
             notices.append(notice)
 
 
@@ -120,10 +129,7 @@ if __name__ == "__main__":
     #This is a an argument that allows the program to capture all the eventsd. This is good for starting over and populating a full db/csv
     #The default is collecting just today.
     #First argument is always the name of the file.
-    if(len(sys.argv) > 1 and sys.argv[1] == "All"):
-        collectall = True
-    else:
-        collectall = False
+
     notices = []
     url = 'https://statelegals.staradvertiser.com/category/public-notices/' #This will automatically start with page 1
 
@@ -131,17 +137,24 @@ if __name__ == "__main__":
     while url != None:
         #Each loop represent a page of notices.
         print("Scraping",url)
-        results = scrapeNoticesFromPage(url,collectall)
+        results = scrapeNoticesFromPage(url)
         notices.extend(results[0])
         url = results[1]
         time.sleep(1)
 
     #Saving to SQL DB
     # Send the new notice record to the insertSQL function to save it to the SQL DB.
+    records_inserted = 0
     if len(notices) > 0:
         for notice in notices:
-            insertSQL(notice)
+            try:
+                if(insertSQL(notice) == True):
+                    records_inserted += 1
+            except Exception as e:
+                print("Error in SQL Insertion")
+                print(e)
         #createCSV(notices) #Uncomment below to save all the notices to csv.
+    print("New Records Inserted",records_inserted)
     print("Ending scrape")
     print("\n\n")
 
