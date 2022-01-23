@@ -166,8 +166,8 @@ if __name__ == "__main__":
     loopThroughPages(url)
 
     print("Scraping Hawaii Classifieds")
-    # url = 'https://hawaiisclassifieds.com/category/legal-notices/'  # This will automatically start with page 1
-    # loopThroughPages(url)
+    url = 'https://hawaiisclassifieds.com/category/legal-notices/'  # This will automatically start with page 1
+    loopThroughPages(url)
     print("Ending scrape")
     print("\n\n")
 
