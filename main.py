@@ -7,10 +7,9 @@ from datetime import datetime
 import pytz
 import passwords
 
-#I had to run "ALTER TABLE HIProjects.public_notices CONVERT TO CHARACTER SET utf8" on the sql table to get it to encode right.
 
 
-def checkIfAlreadyExistsInDB(notice):
+def checkIfAlreadyExistsInDB(notice,table_name):
     mydb = mysql.connector.connect(
         host=passwords.host,
         user=passwords.user,
@@ -18,17 +17,17 @@ def checkIfAlreadyExistsInDB(notice):
         database=passwords.database
     )
     mycursor = mydb.cursor()
-    sql = "SELECT * FROM public_notices WHERE Notice_Type = %s and Publication_Date = %s and Full_Description_Link = %s and Newspaper = %s and Full_Description = %s"
+    sql = "SELECT * FROM " + table_name + " WHERE Notice_Type = %s and Publication_Date = %s and Full_Description_Link = %s and Newspaper = %s and Full_Description = %s"
     val = (notice['Notice Type'],notice['Publication Date'],notice['Link'],notice['Newspaper'],notice['Full Description'],)
 
     mycursor.execute(sql, val)
     records = mycursor.fetchall()
     return len(records)
-def insertSQL(notice):
+def insertSQL(notice,table_name):
     #Insert the new record into the sql table.
     #This function only inserts one at a time.
 
-    if(checkIfAlreadyExistsInDB(notice) > 0):
+    if(checkIfAlreadyExistsInDB(notice,table_name) > 0):
         #print(notice['Link'],"is already in the db")
         return False
 
@@ -41,7 +40,7 @@ def insertSQL(notice):
 
     mycursor = mydb.cursor()
     timestamp = datetime.now(pytz.timezone('Pacific/Honolulu'))
-    sql = "INSERT INTO public_notices (Notice_Type,Publication_Date,Newspaper,Full_Description_Link,Brief_Description,Full_Description,Timestamp) " \
+    sql = "INSERT INTO " + table_name + " (Notice_Type,Publication_Date,Newspaper,Full_Description_Link,Brief_Description,Full_Description,Timestamp) " \
           "VALUES (%s, %s,%s, %s,%s, %s,%s)"
     val = (notice['Notice Type'],notice['Publication Date'],notice['Newspaper'],notice['Link'], notice['Brief Description'],notice['Full Description'],timestamp)
     mycursor.execute(sql, val)
@@ -88,11 +87,17 @@ def scrapeNoticesFromPage(url):
 
             notice['Publication Date'] = correcteddate
             contentrow = row.find('td',attrs={'class':'tdlisting'})
-            newspaperspan = contentrow.find_all('span')[0]
-            newspaper = newspaperspan.text
-            #print("Newspaper", newspaper)
-            notice['Newspaper'] = newspaper[13:]
-            full_desciption_atag = contentrow.find_all('a')[1]
+            if(url[0:38] == "https://statelegals.staradvertiser.com"):
+                newspaperspan = contentrow.find_all('span')[0]
+                newspaper = newspaperspan.text
+                #print("Newspaper", newspaper)
+                notice['Newspaper'] = newspaper[13:]
+                full_desciption_atag = contentrow.find_all('a')[1]
+            else:
+                #This is for Hawaii Classifieds which has a slightly different structure and no newspaper
+                notice['Newspaper'] = None
+                full_desciption_atag = contentrow.find('a')
+
             full_description_link = full_desciption_atag['href']
             #print("Link",full_description_link)
             notice['Link'] = full_description_link
@@ -123,15 +128,12 @@ def createCSV(notices):
         writer.writeheader()
         writer.writerows(notices)
 
-
-if __name__ == "__main__":
-    print("Starting Scrape",datetime.now(pytz.timezone('Pacific/Honolulu')))
-    #This is a an argument that allows the program to capture all the eventsd. This is good for starting over and populating a full db/csv
-    #The default is collecting just today.
-    #First argument is always the name of the file.
-
-    notices = []
-    url = 'https://statelegals.staradvertiser.com/category/public-notices/' #This will automatically start with page 1
+def loopThroughPages(url):
+    #This needs to be done up here because eventually the url is equal to none at the end of the pages.
+    if (url[0:38] == "https://statelegals.staradvertiser.com"):
+        table_name = "star_advertiser"
+    else:
+        table_name = "hawaii_classifieds"
 
     #Keep looping until the return from the scrapeNoticesFromPage() function is none, meaning we have no more pages.
     while url != None:
@@ -144,17 +146,28 @@ if __name__ == "__main__":
 
     #Saving to SQL DB
     # Send the new notice record to the insertSQL function to save it to the SQL DB.
+
     records_inserted = 0
     if len(notices) > 0:
         for notice in notices:
             try:
-                if(insertSQL(notice) == True):
+                if(insertSQL(notice,table_name) == True):
                     records_inserted += 1
             except Exception as e:
                 print("Error in SQL Insertion")
                 print(e)
         #createCSV(notices) #Uncomment below to save all the notices to csv.
     print("New Records Inserted",records_inserted)
+if __name__ == "__main__":
+    print("Starting Scrape",datetime.now(pytz.timezone('Pacific/Honolulu')))
+    notices = []
+    print("Scraping Star Advertiser")
+    url = 'https://statelegals.staradvertiser.com/category/public-notices/' #This will automatically start with page 1
+    loopThroughPages(url)
+
+    print("Scraping Hawaii Classifieds")
+    # url = 'https://hawaiisclassifieds.com/category/legal-notices/'  # This will automatically start with page 1
+    # loopThroughPages(url)
     print("Ending scrape")
     print("\n\n")
 

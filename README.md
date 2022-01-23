@@ -15,6 +15,11 @@ source venv/bin/activate
 pip install -r requirements.txt
 python main.py
 ```
+I had to run code below to get it to run on the sql table to get it to encode right.
+```
+ALTER TABLE HIProjects.public_notices CONVERT TO CHARACTER SET utf8
+
+```
 ## Use
 ```
 python main.py
