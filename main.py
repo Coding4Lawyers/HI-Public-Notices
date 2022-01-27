@@ -20,7 +20,6 @@ def checkIfAlreadyExistsInDB(notice,table_name):
     sql = "SELECT * FROM " + table_name + " WHERE Notice_Type = %s and Publication_Date = %s and Full_Description_Link = %s and (Newspaper = %s or Newspaper is NULL) and Full_Description = %s"
     val = (notice['Notice Type'],notice['Publication Date'],notice['Link'],notice['Newspaper'],notice['Full Description'],)
 
-
     mycursor.execute(sql, val)
     records = mycursor.fetchall()
     return len(records)
@@ -166,6 +165,7 @@ if __name__ == "__main__":
     url = 'https://statelegals.staradvertiser.com/category/public-notices/' #This will automatically start with page 1
     loopThroughPages(url)
 
+    notices = []
     print("Scraping Hawaii Classifieds")
     url = 'https://hawaiisclassifieds.com/category/legal-notices/'  # This will automatically start with page 1
     loopThroughPages(url)
