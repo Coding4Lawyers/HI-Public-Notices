@@ -17,8 +17,9 @@ def checkIfAlreadyExistsInDB(notice,table_name):
         database=passwords.database
     )
     mycursor = mydb.cursor()
-    sql = "SELECT * FROM " + table_name + " WHERE Notice_Type = %s and Publication_Date = %s and Full_Description_Link = %s and Newspaper = %s and Full_Description = %s"
+    sql = "SELECT * FROM " + table_name + " WHERE Notice_Type = %s and Publication_Date = %s and Full_Description_Link = %s and (Newspaper = %s or Newspaper is NULL) and Full_Description = %s"
     val = (notice['Notice Type'],notice['Publication Date'],notice['Link'],notice['Newspaper'],notice['Full Description'],)
+
 
     mycursor.execute(sql, val)
     records = mycursor.fetchall()
@@ -161,9 +162,9 @@ def loopThroughPages(url):
 if __name__ == "__main__":
     print("Starting Scrape",datetime.now(pytz.timezone('Pacific/Honolulu')))
     notices = []
-    print("Scraping Star Advertiser")
-    url = 'https://statelegals.staradvertiser.com/category/public-notices/' #This will automatically start with page 1
-    loopThroughPages(url)
+    # print("Scraping Star Advertiser")
+    # url = 'https://statelegals.staradvertiser.com/category/public-notices/' #This will automatically start with page 1
+    # loopThroughPages(url)
 
     print("Scraping Hawaii Classifieds")
     url = 'https://hawaiisclassifieds.com/category/legal-notices/'  # This will automatically start with page 1
