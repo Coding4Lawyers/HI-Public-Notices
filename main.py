@@ -162,9 +162,9 @@ def loopThroughPages(url):
 if __name__ == "__main__":
     print("Starting Scrape",datetime.now(pytz.timezone('Pacific/Honolulu')))
     notices = []
-    # print("Scraping Star Advertiser")
-    # url = 'https://statelegals.staradvertiser.com/category/public-notices/' #This will automatically start with page 1
-    # loopThroughPages(url)
+    print("Scraping Star Advertiser")
+    url = 'https://statelegals.staradvertiser.com/category/public-notices/' #This will automatically start with page 1
+    loopThroughPages(url)
 
     print("Scraping Hawaii Classifieds")
     url = 'https://hawaiisclassifieds.com/category/legal-notices/'  # This will automatically start with page 1
