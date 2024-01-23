@@ -1,0 +1,26 @@
+name: Scrape Classifieds Section
+
+# on: push
+on:
+  schedule:
+    - cron: '5 3 * * *' #Every Day
+  workflow_dispatch: {}
+jobs:
+  scraper:
+    runs-on: ubuntu-latest
+
+    env: # Or as an environment variable
+      host: ${{ secrets.host }}
+      user: ${{ secrets.user }}
+      dbpassword: ${{ secrets.dbpassword }}
+      database: ${{ secrets.database }}
+
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scrape-Classifieds-HI
+        run: |
+          sudo apt-get update
+          pip install -r requirements.txt
+          python main.py

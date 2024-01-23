@@ -5,16 +5,16 @@ import csv
 import mysql.connector
 from datetime import datetime
 import pytz
-import passwords
+import os
 
 
 
 def checkIfAlreadyExistsInDB(notice,table_name):
     mydb = mysql.connector.connect(
-        host=passwords.host,
-        user=passwords.user,
-        password=passwords.password,
-        database=passwords.database
+        host=os.environ.get('host'),
+        user=os.environ.get('user'),
+        password=os.environ.get('dbpassword'),
+        database=os.environ.get('database')
     )
     mycursor = mydb.cursor()
     sql = "SELECT * FROM " + table_name + " WHERE Notice_Type = %s and Publication_Date = %s and Full_Description_Link = %s and (Newspaper = %s or Newspaper is NULL) and Full_Description = %s"
@@ -32,10 +32,10 @@ def insertSQL(notice,table_name):
         return False
 
     mydb = mysql.connector.connect(
-        host=passwords.host,
-        user=passwords.user,
-        password=passwords.password,
-        database=passwords.database
+        host=os.environ.get('host'),
+        user=os.environ.get('user'),
+        password=os.environ.get('dbpassword'),
+        database=os.environ.get('database')
     )
 
     mycursor = mydb.cursor()
@@ -161,9 +161,10 @@ def loopThroughPages(url):
 if __name__ == "__main__":
     print("Starting Scrape",datetime.now(pytz.timezone('Pacific/Honolulu')))
     notices = []
-    print("Scraping Star Advertiser")
-    url = 'https://statelegals.staradvertiser.com/category/public-notices/' #This will automatically start with page 1
-    loopThroughPages(url)
+    #Star advertisers stopped working in June of 2022 for some reason. Need to figure out why it's not scraping anymore.
+    # print("Scraping Star Advertiser")
+    # url = 'https://statelegals.staradvertiser.com/category/public-notices/' #This will automatically start with page 1
+    # loopThroughPages(url)
 
     notices = []
     print("Scraping Hawaii Classifieds")
